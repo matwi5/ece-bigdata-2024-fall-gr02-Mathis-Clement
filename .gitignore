@@ -1,0 +1,16 @@
+# SSH Keys
+*.pem
+PolePredict Cluster.pem
+
+# AWS credentials
+.aws
+.aws/credentials
+
+# Other sensitive files
+*.key
+*.crt
+*.secret
+
+# OS specific files
+.DS_Store
+.env
