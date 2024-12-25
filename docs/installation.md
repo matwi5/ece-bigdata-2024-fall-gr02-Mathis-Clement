@@ -118,13 +118,51 @@ aws emr list-clusters --active
 ```
 
 ### 5. Access Cluster
+
+#### Configure SSH Access
+1. Get master node DNS:
 ```bash
-# SSH to master node
+aws emr describe-cluster --cluster-id <cluster-id> --query 'Cluster.MasterPublicDnsName'
+```
+
+2. Configure security group:
+```bash
+# Get security group ID
+aws emr describe-cluster --cluster-id <cluster-id> --query 'Cluster.Ec2InstanceAttributes.EmrManagedMasterSecurityGroup'
+
+# Add SSH access
+aws ec2 authorize-security-group-ingress \
+    --group-id <security-group-id> \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0
+```
+
+3. Set up SSH key (WSL users):
+```bash
+# Copy key to WSL home directory
+cp "PolePredict Cluster.pem" ~/
+cd ~
+chmod 400 "PolePredict Cluster.pem"
+
+# Connect to cluster
 ssh -i "PolePredict Cluster.pem" hadoop@<master-node-public-dns>
+```
 
-# Access JupyterHub
-http://<master-node-public-dns>:9443
+4. Set up SSH key (non-WSL users):
+```bash
+chmod 400 "PolePredict Cluster.pem"
+ssh -i "PolePredict Cluster.pem" hadoop@<master-node-public-dns>
+```
 
-# Access Livy
-http://<master-node-public-dns>:8998
+#### Access Web Interfaces
+```bash
+# JupyterHub
+https://<master-node-public-dns>:9443
+
+# HBase UI
+http://<master-node-public-dns>:16010
+
+# Spark History Server
+http://<master-node-public-dns>:18080
 ```

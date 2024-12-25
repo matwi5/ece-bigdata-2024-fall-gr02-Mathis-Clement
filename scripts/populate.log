@@ -1,0 +1,174 @@
+2024-12-25 00:40:38,315 - INFO - HBase tables initialized successfully
+2024-12-25 00:40:38,315 - INFO - Initializing F1 data collection
+2024-12-25 00:40:38,316 - INFO - Starting data collection for 2023
+2024-12-25 00:40:38,316 - INFO - Making request: https://api.openf1.org/v1/meetings?year=2023
+2024-12-25 00:40:38,357 - INFO - Received data: 23 items
+2024-12-25 00:40:38,465 - INFO - Fetched and stored 23 meetings for 2023
+2024-12-25 00:40:38,465 - INFO - ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2024-12-25 00:40:38,466 - INFO - Processing meeting: Pre-Season Testing
+2024-12-25 00:40:38,466 - INFO - Making request: https://api.openf1.org/v1/sessions?meeting_key=1140
+2024-12-25 00:40:38,486 - INFO - Received data: 3 items
+2024-12-25 00:40:38,486 - INFO - Processing session Practice 1
+2024-12-25 00:40:38,492 - INFO - Making request: https://api.openf1.org/v1/drivers?session_key=9222
+2024-12-25 00:40:38,676 - INFO - Received data: 19 items
+2024-12-25 00:40:38,676 - INFO - Making request: https://api.openf1.org/v1/race_control?session_key=9222
+2024-12-25 00:40:38,738 - INFO - Received data: 153 items
+2024-12-25 00:40:38,849 - INFO - Making request: https://api.openf1.org/v1/weather?session_key=9222
+2024-12-25 00:40:39,219 - INFO - Received data: 590 items
+2024-12-25 00:40:39,344 - INFO - Processing driver 1
+2024-12-25 00:40:39,344 - INFO - Making request: https://api.openf1.org/v1/sessions?session_key=9222
+2024-12-25 00:40:39,442 - INFO - Received data: 1 items
+2024-12-25 00:40:39,442 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T07:00:00+00:00&date<2023-02-23T07:15:00+00:00
+2024-12-25 00:40:40,553 - INFO - Received data: 3391 items
+2024-12-25 00:40:56,760 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T07:15:00+00:00&date<2023-02-23T07:30:00+00:00
+2024-12-25 00:40:57,623 - INFO - Received data: 3378 items
+2024-12-25 00:41:13,383 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T07:30:00+00:00&date<2023-02-23T07:45:00+00:00
+2024-12-25 00:41:14,696 - INFO - Received data: 3422 items
+2024-12-25 00:41:30,475 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T07:45:00+00:00&date<2023-02-23T08:00:00+00:00
+2024-12-25 00:41:31,488 - INFO - Received data: 3384 items
+2024-12-25 00:41:47,472 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T08:00:00+00:00&date<2023-02-23T08:15:00+00:00
+2024-12-25 00:41:50,553 - INFO - Received data: 3431 items
+2024-12-25 00:42:07,635 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T08:15:00+00:00&date<2023-02-23T08:30:00+00:00
+2024-12-25 00:42:08,576 - INFO - Received data: 3452 items
+2024-12-25 00:42:25,765 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T08:30:00+00:00&date<2023-02-23T08:45:00+00:00
+2024-12-25 00:42:26,992 - INFO - Received data: 3364 items
+2024-12-25 00:42:43,858 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T08:45:00+00:00&date<2023-02-23T09:00:00+00:00
+2024-12-25 00:42:44,756 - INFO - Received data: 3351 items
+2024-12-25 00:43:00,960 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T09:00:00+00:00&date<2023-02-23T09:15:00+00:00
+2024-12-25 00:43:01,824 - INFO - Received data: 3437 items
+2024-12-25 00:43:18,761 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T09:15:00+00:00&date<2023-02-23T09:30:00+00:00
+2024-12-25 00:43:19,694 - INFO - Received data: 3428 items
+2024-12-25 00:43:36,843 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T09:30:00+00:00&date<2023-02-23T09:45:00+00:00
+2024-12-25 00:43:37,921 - INFO - Received data: 3429 items
+2024-12-25 00:43:54,916 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T09:45:00+00:00&date<2023-02-23T10:00:00+00:00
+2024-12-25 00:43:56,202 - INFO - Received data: 3419 items
+2024-12-25 00:44:13,034 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T10:00:00+00:00&date<2023-02-23T10:15:00+00:00
+2024-12-25 00:44:14,165 - INFO - Received data: 3418 items
+2024-12-25 00:44:31,039 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T10:15:00+00:00&date<2023-02-23T10:30:00+00:00
+2024-12-25 00:44:31,931 - INFO - Received data: 3397 items
+2024-12-25 00:44:48,613 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T10:30:00+00:00&date<2023-02-23T10:45:00+00:00
+2024-12-25 00:44:49,518 - INFO - Received data: 3369 items
+2024-12-25 00:45:06,062 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T10:45:00+00:00&date<2023-02-23T11:00:00+00:00
+2024-12-25 00:45:07,327 - INFO - Received data: 3428 items
+2024-12-25 00:45:24,029 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T11:00:00+00:00&date<2023-02-23T11:15:00+00:00
+2024-12-25 00:45:25,112 - INFO - Received data: 3435 items
+2024-12-25 00:45:42,099 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T11:15:00+00:00&date<2023-02-23T11:30:00+00:00
+2024-12-25 00:45:42,483 - INFO - Received data: 920 items
+2024-12-25 00:45:47,027 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T11:30:00+00:00&date<2023-02-23T11:45:00+00:00
+2024-12-25 00:45:47,134 - INFO - Received data: 0 items
+2024-12-25 00:45:47,236 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T11:45:00+00:00&date<2023-02-23T12:00:00+00:00
+2024-12-25 00:45:47,332 - INFO - Received data: 0 items
+2024-12-25 00:45:47,433 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T12:00:00+00:00&date<2023-02-23T12:15:00+00:00
+2024-12-25 00:45:48,271 - INFO - Received data: 2573 items
+2024-12-25 00:46:00,943 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T12:15:00+00:00&date<2023-02-23T12:30:00+00:00
+2024-12-25 00:46:01,942 - INFO - Received data: 3373 items
+2024-12-25 00:46:18,376 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T12:30:00+00:00&date<2023-02-23T12:45:00+00:00
+2024-12-25 00:46:19,514 - INFO - Received data: 3378 items
+2024-12-25 00:46:36,245 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T12:45:00+00:00&date<2023-02-23T13:00:00+00:00
+2024-12-25 00:46:37,264 - INFO - Received data: 3372 items
+2024-12-25 00:46:53,604 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T13:00:00+00:00&date<2023-02-23T13:15:00+00:00
+2024-12-25 00:46:54,526 - INFO - Received data: 3355 items
+2024-12-25 00:47:10,321 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T13:15:00+00:00&date<2023-02-23T13:30:00+00:00
+2024-12-25 00:47:12,377 - INFO - Received data: 3369 items
+2024-12-25 00:47:28,016 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T13:30:00+00:00&date<2023-02-23T13:45:00+00:00
+2024-12-25 00:47:28,944 - INFO - Received data: 3396 items
+2024-12-25 00:47:45,142 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T13:45:00+00:00&date<2023-02-23T14:00:00+00:00
+2024-12-25 00:47:46,610 - INFO - Received data: 3370 items
+2024-12-25 00:48:02,932 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T14:00:00+00:00&date<2023-02-23T14:15:00+00:00
+2024-12-25 00:48:03,972 - INFO - Received data: 3409 items
+2024-12-25 00:48:20,341 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T14:15:00+00:00&date<2023-02-23T14:30:00+00:00
+2024-12-25 00:48:21,302 - INFO - Received data: 3392 items
+2024-12-25 00:48:37,481 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T14:30:00+00:00&date<2023-02-23T14:45:00+00:00
+2024-12-25 00:48:38,453 - INFO - Received data: 3420 items
+2024-12-25 00:48:54,993 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T14:45:00+00:00&date<2023-02-23T15:00:00+00:00
+2024-12-25 00:48:56,006 - INFO - Received data: 3364 items
+2024-12-25 00:49:12,640 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T15:00:00+00:00&date<2023-02-23T15:15:00+00:00
+2024-12-25 00:49:13,734 - INFO - Received data: 3412 items
+2024-12-25 00:49:30,117 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T15:15:00+00:00&date<2023-02-23T15:30:00+00:00
+2024-12-25 00:49:31,042 - INFO - Received data: 3422 items
+2024-12-25 00:49:47,325 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T15:30:00+00:00&date<2023-02-23T15:45:00+00:00
+2024-12-25 00:49:48,259 - INFO - Received data: 3365 items
+2024-12-25 00:50:03,970 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T15:45:00+00:00&date<2023-02-23T16:00:00+00:00
+2024-12-25 00:50:05,540 - INFO - Received data: 3356 items
+2024-12-25 00:50:21,779 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T16:00:00+00:00&date<2023-02-23T16:15:00+00:00
+2024-12-25 00:50:22,731 - INFO - Received data: 3392 items
+2024-12-25 00:50:38,890 - INFO - Making request: https://api.openf1.org/v1/car_data?session_key=9222&driver_number=1&date>=2023-02-23T16:15:00+00:00&date<2023-02-23T16:30:00+00:00
+2024-12-25 00:50:39,838 - INFO - Received data: 3407 items
+2024-12-25 00:50:55,772 - INFO - Making request: https://api.openf1.org/v1/sessions?session_key=9222
+2024-12-25 00:50:55,879 - INFO - Received data: 1 items
+2024-12-25 00:50:55,880 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T07:00:00+00:00&date<2023-02-23T07:15:00+00:00
+2024-12-25 00:50:56,703 - INFO - Received data: 3462 items
+2024-12-25 00:51:12,579 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T07:15:00+00:00&date<2023-02-23T07:30:00+00:00
+2024-12-25 00:51:13,290 - INFO - Received data: 3462 items
+2024-12-25 00:51:29,636 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T07:30:00+00:00&date<2023-02-23T07:45:00+00:00
+2024-12-25 00:51:31,090 - INFO - Received data: 3441 items
+2024-12-25 00:51:47,140 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T07:45:00+00:00&date<2023-02-23T08:00:00+00:00
+2024-12-25 00:51:47,867 - INFO - Received data: 3465 items
+2024-12-25 00:52:04,607 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T08:00:00+00:00&date<2023-02-23T08:15:00+00:00
+2024-12-25 00:52:05,471 - INFO - Received data: 3483 items
+2024-12-25 00:52:22,614 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T08:15:00+00:00&date<2023-02-23T08:30:00+00:00
+2024-12-25 00:52:25,463 - INFO - Received data: 3473 items
+2024-12-25 00:52:41,991 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T08:30:00+00:00&date<2023-02-23T08:45:00+00:00
+2024-12-25 00:52:42,758 - INFO - Received data: 3422 items
+2024-12-25 00:52:58,432 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T08:45:00+00:00&date<2023-02-23T09:00:00+00:00
+2024-12-25 00:52:59,276 - INFO - Received data: 3426 items
+2024-12-25 00:53:14,956 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T09:00:00+00:00&date<2023-02-23T09:15:00+00:00
+2024-12-25 00:53:15,890 - INFO - Received data: 3487 items
+2024-12-25 00:53:32,967 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T09:15:00+00:00&date<2023-02-23T09:30:00+00:00
+2024-12-25 00:53:34,632 - INFO - Received data: 3427 items
+2024-12-25 00:53:51,309 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T09:30:00+00:00&date<2023-02-23T09:45:00+00:00
+2024-12-25 00:53:52,111 - INFO - Received data: 3431 items
+2024-12-25 00:54:08,705 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T09:45:00+00:00&date<2023-02-23T10:00:00+00:00
+2024-12-25 00:54:11,315 - INFO - Received data: 3426 items
+2024-12-25 00:54:27,819 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T10:00:00+00:00&date<2023-02-23T10:15:00+00:00
+2024-12-25 00:54:28,538 - INFO - Received data: 3449 items
+2024-12-25 00:54:45,075 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T10:15:00+00:00&date<2023-02-23T10:30:00+00:00
+2024-12-25 00:54:45,893 - INFO - Received data: 3482 items
+2024-12-25 00:55:02,965 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T10:30:00+00:00&date<2023-02-23T10:45:00+00:00
+2024-12-25 00:55:06,049 - INFO - Received data: 3435 items
+2024-12-25 00:55:22,680 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T10:45:00+00:00&date<2023-02-23T11:00:00+00:00
+2024-12-25 00:55:23,697 - INFO - Received data: 3496 items
+2024-12-25 00:55:40,590 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T11:00:00+00:00&date<2023-02-23T11:15:00+00:00
+2024-12-25 00:55:41,360 - INFO - Received data: 3466 items
+2024-12-25 00:55:58,004 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T11:15:00+00:00&date<2023-02-23T11:30:00+00:00
+2024-12-25 00:56:00,016 - INFO - Received data: 941 items
+2024-12-25 00:56:04,739 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T11:30:00+00:00&date<2023-02-23T11:45:00+00:00
+2024-12-25 00:56:04,837 - INFO - Received data: 0 items
+2024-12-25 00:56:04,938 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T11:45:00+00:00&date<2023-02-23T12:00:00+00:00
+2024-12-25 00:56:05,233 - INFO - Received data: 0 items
+2024-12-25 00:56:05,334 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T12:00:00+00:00&date<2023-02-23T12:15:00+00:00
+2024-12-25 00:56:05,887 - INFO - Received data: 2785 items
+2024-12-25 00:56:19,467 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T12:15:00+00:00&date<2023-02-23T12:30:00+00:00
+2024-12-25 00:56:20,137 - INFO - Received data: 3461 items
+2024-12-25 00:56:36,539 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T12:30:00+00:00&date<2023-02-23T12:45:00+00:00
+2024-12-25 00:56:39,181 - INFO - Received data: 3433 items
+2024-12-25 00:56:55,657 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T12:45:00+00:00&date<2023-02-23T13:00:00+00:00
+2024-12-25 00:56:56,595 - INFO - Received data: 3437 items
+2024-12-25 00:57:13,113 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T13:00:00+00:00&date<2023-02-23T13:15:00+00:00
+2024-12-25 00:57:14,136 - INFO - Received data: 3433 items
+2024-12-25 00:57:30,287 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T13:15:00+00:00&date<2023-02-23T13:30:00+00:00
+2024-12-25 00:57:32,872 - INFO - Received data: 3443 items
+2024-12-25 00:57:48,723 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T13:30:00+00:00&date<2023-02-23T13:45:00+00:00
+2024-12-25 00:57:49,458 - INFO - Received data: 3444 items
+2024-12-25 00:58:05,801 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T13:45:00+00:00&date<2023-02-23T14:00:00+00:00
+2024-12-25 00:58:08,411 - INFO - Received data: 3429 items
+2024-12-25 00:58:24,887 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T14:00:00+00:00&date<2023-02-23T14:15:00+00:00
+2024-12-25 00:58:25,801 - INFO - Received data: 3400 items
+2024-12-25 00:58:42,410 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T14:15:00+00:00&date<2023-02-23T14:30:00+00:00
+2024-12-25 00:58:44,963 - INFO - Received data: 3474 items
+2024-12-25 00:59:01,651 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T14:30:00+00:00&date<2023-02-23T14:45:00+00:00
+2024-12-25 00:59:02,382 - INFO - Received data: 3440 items
+2024-12-25 00:59:19,338 - INFO - Making request: https://api.openf1.org/v1/location?session_key=9222&driver_number=1&date>=2023-02-23T14:45:00+00:00&date<2023-02-23T15:00:00+00:00
+2024-12-25 00:59:20,033 - INFO - Received data: 3416 items
+2024-12-25 00:59:32,133 - WARNING - 
+User interruption detected!
+2024-12-25 00:59:32,134 - WARNING - Initiating graceful shutdown...
+2024-12-25 00:59:32,135 - INFO - ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2024-12-25 00:59:32,135 - INFO - Time elapsed: 0h 18m 53s
+2024-12-25 00:59:32,136 - INFO - Meetings processed: 0
+2024-12-25 00:59:32,136 - INFO - Sessions processed: 0
+2024-12-25 00:59:32,137 - INFO - Total requests: 0
+2024-12-25 00:59:32,137 - INFO - Failed requests: 0
+2024-12-25 00:59:32,138 - INFO - 
+Endpoint statistics:
+2024-12-25 00:59:32,139 - INFO - Shutdown completed

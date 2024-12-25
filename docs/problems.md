@@ -22,7 +22,7 @@ Initially planned to use t3.small/medium instances for cost savings.
 
 ## Storage Configuration
 
-### Problem: EBS Volume Size
+### Problem 1: EBS Volume Size
 **Issue:**
 Initial 32GB storage was insufficient for HDFS replication.
 
@@ -30,6 +30,47 @@ Initial 32GB storage was insufficient for HDFS replication.
 - Increased EBS volume size to 150GB for core nodes
 - Configured gp3 volumes for better performance
 - Set 50GB for master node
+
+### Problem 2: HDFS Replication Factor
+**Issue:**
+Default replication factor of 3 caused under-replication with only 2 core nodes.
+
+**Solution:**
+1. Modified HDFS configuration:
+```bash
+sudo vim /etc/hadoop/conf/hdfs-site.xml
+# Added dfs.replication=2
+```
+
+2. Modified HBase configuration:
+```bash
+sudo vim /etc/hbase/conf/hbase-site.xml
+# Added dfs.replication=2
+```
+
+3. Applied changes:
+```bash
+sudo systemctl restart hadoop-hdfs-namenode
+sudo systemctl start hbase-master
+hdfs dfs -setrep -w 2 -R /user/hbase
+```
+
+**Challenges:**
+- Region servers required manual restart
+- Some files remained under-replicated initially
+- WAL files blocked replication process
+
+**Verification Process:**
+```bash
+# Check replication factor
+hdfs getconf -confKey dfs.replication
+
+# Monitor replication status
+hdfs dfsadmin -report
+
+# Verify block replication
+hdfs fsck /user/hbase -files -blocks
+```
 
 ## Application Stack Integration
 
@@ -53,9 +94,9 @@ Multiple subnets available in VPC.
 - Ensures all nodes are in same availability zone
 - Reduces inter-node latency
 
-## SSH Key Issues
+## SSH Issues
 
-### Problem: Invalid SSH Key Name
+### Problem 1: Invalid SSH Key Name
 **Error Message:**
 ```
 VALIDATION_ERROR_INVALID_SSH_KEY_NAME
@@ -71,11 +112,43 @@ aws ec2 create-key-pair \
     --query 'KeyMaterial' \
     --output text > "PolePredict Cluster.pem"
 ```
-2. Secure the key file:
+
+### Problem 2: SSH Connection Timeout
+**Issue:** SSH connection hangs and requires Ctrl+C to exit
+
+**Solution:**
+Add inbound rule to master node security group:
 ```bash
+# Get security group ID
+aws emr describe-cluster --cluster-id <cluster-id> --query 'Cluster.Ec2InstanceAttributes.EmrManagedMasterSecurityGroup'
+
+# Add SSH rule
+aws ec2 authorize-security-group-ingress \
+    --group-id <security-group-id> \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0
+```
+
+### Problem 3: WSL SSH Key Permissions
+**Error Message:**
+```
+WARNING: UNPROTECTED PRIVATE KEY FILE!
+Permissions 0555 for 'PolePredict Cluster.pem' are too open.
+```
+
+**Solution:**
+When using WSL, key files in Windows-mounted directories (/mnt/c/...) can't have proper Unix permissions. Fix:
+1. Copy key to WSL home directory:
+```bash
+cp "PolePredict Cluster.pem" ~/
+cd ~
 chmod 400 "PolePredict Cluster.pem"
 ```
-3. Re-run cluster creation script
+2. Connect using key from WSL home:
+```bash
+ssh -i ~/PolePredict\ Cluster.pem hadoop@<master-public-dns>
+```
 
 ## Security
 
@@ -117,7 +190,31 @@ EC2 Message: You are not authorized to perform: ec2:CreateSecurityGroup
    }
    ```
 
-## Best Practices Learned
+### Problem 4: DataNode Not Starting on Master Node
+**Issue:**
+```bash
+sudo systemctl start hadoop-hdfs-datanode
+Job for hadoop-hdfs-datanode.service failed
+```
+
+**Explanation:**
+This is actually normal behavior. In EMR:
+- Master node should only run NameNode
+- DataNodes should only run on core nodes
+- Error when trying to start DataNode on master is expected
+
+**Verification:**
+```bash
+# Check HDFS nodes status
+hdfs dfsadmin -report
+
+# Should show:
+- NameNode on master node
+- Two active DataNodes on core nodes
+- No data corruption or replication issues
+```
+
+## Best Practices
 
 1. Instance Selection
 - Always verify instance availability in target region
@@ -128,6 +225,7 @@ EC2 Message: You are not authorized to perform: ec2:CreateSecurityGroup
 - Calculate storage needs including replication factor
 - Use gp3 volumes for better performance
 - Allocate sufficient space for logs and temporary files
+- Ensure replication factor matches number of DataNodes
 
 3. Networking
 - Use same subnet for all nodes
@@ -138,3 +236,4 @@ EC2 Message: You are not authorized to perform: ec2:CreateSecurityGroup
 - Regular checks using `describe-cluster`
 - Monitor CloudWatch metrics
 - Review EMR logs in S3
+- Check replication status regularly
