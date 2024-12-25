@@ -1,15 +1,42 @@
 # EMR Cluster Installation Guide
 
+## Overview
+This guide provides step-by-step instructions for setting up an Amazon EMR cluster with HBase and Spark for Formula 1 data analysis. The cluster consists of one master node and two core nodes, running on Amazon Linux 2023.
+
 ## Prerequisites
-- AWS CLI installed
-- AWS credentials configured
+
+### Required Components
+```mermaid
+graph TD
+    subgraph Prerequisites
+        AWS[AWS CLI]
+        CRED[AWS Credentials]
+        SSH[SSH Key Pair]
+        IAM[IAM Roles]
+        VPC[VPC & Subnet]
+    end
+
+    subgraph Configurations
+        CLI[CLI Setup]
+        INF[Infrastructure]
+        SEC[Security]
+    end
+
+    Prerequisites --> Configurations
+```
+
+- AWS CLI installed and configured
+- AWS credentials with appropriate permissions
 - SSH key pair "PolePredict Cluster"
-- Appropriate IAM roles and permissions
-- VPC and subnet configured
+- IAM roles configured
+- VPC and subnet in eu-west-3 (Paris) region
 
-## Step-by-Step Installation
+## Installation Steps
 
-### 1. AWS CLI Setup
+### 1. AWS CLI Configuration
+
+First, install and configure the AWS CLI:
+
 ```bash
 # Install AWS CLI
 sudo apt-get update
@@ -17,10 +44,16 @@ sudo apt-get install awscli
 
 # Configure AWS CLI
 aws configure
-# Enter your credentials when prompted
+# Enter your AWS Access Key ID
+# Enter your AWS Secret Access Key
+# Default region: eu-west-3
+# Default output format: json
 ```
 
-### 2. Verify Infrastructure
+### 2. Infrastructure Verification
+
+Verify your AWS infrastructure components:
+
 ```bash
 # Check VPC configuration
 aws ec2 describe-vpcs
@@ -32,103 +65,78 @@ aws ec2 describe-subnets
 aws iam list-roles | grep -E "EMR|emr"
 ```
 
-### 3. Create EMR Cluster
-1. Create script file `create_cluster.sh`:
+### 3. Cluster Creation
+
+Create and execute the cluster creation script:
+
+```mermaid
+graph TD
+    subgraph Script Creation
+        CF[Create File]
+        CH[Make Executable]
+        EX[Execute Script]
+    end
+
+    subgraph Verification
+        CS[Check Status]
+        LC[List Clusters]
+    end
+
+    CF --> CH
+    CH --> EX
+    EX --> Verification
+```
+
+1. Create `create_cluster.sh`:
 ```bash
 #!/bin/bash
 
 CLUSTER_NAME="BigData-HBase-Spark"
 REGION="eu-west-3"
 EMR_VERSION="emr-7.5.0"
-LOG_URI="s3://aws-logs-891376966635-eu-west-3/elasticmapreduce"
-SERVICE_ROLE="arn:aws:iam::891376966635:role/service-role/AmazonEMR-ServiceRole-20241219T204718"
-SUBNET_ID="subnet-08ea540a579532ef6"
-
-aws emr create-cluster \
-  --name "${CLUSTER_NAME}" \
-  --release-label "${EMR_VERSION}" \
-  --region "${REGION}" \
-  --log-uri "${LOG_URI}" \
-  --service-role "${SERVICE_ROLE}" \
-  --applications Name=Hadoop Name=HBase Name=Spark Name=ZooKeeper Name=JupyterHub Name=Livy \
-  --unhealthy-node-replacement \
-  --tags 'for-use-with-amazon-emr-managed-policies=true' \
-  --ec2-attributes "{
-    \"InstanceProfile\":\"AmazonEMR-InstanceProfile-20241219T204701\",
-    \"SubnetId\":\"${SUBNET_ID}\",
-    \"KeyName\":\"PolePredict Cluster\"
-  }" \
-  --instance-groups "[
-    {
-      \"InstanceCount\":1,
-      \"InstanceGroupType\":\"MASTER\",
-      \"Name\":\"Primary\",
-      \"InstanceType\":\"m7g.xlarge\",
-      \"EbsConfiguration\":{
-        \"EbsBlockDeviceConfigs\":[
-          {
-            \"VolumeSpecification\":{
-              \"VolumeType\":\"gp3\",
-              \"SizeInGB\":50
-            },
-            \"VolumesPerInstance\":1
-          }
-        ]
-      }
-    },
-    {
-      \"InstanceCount\":2,
-      \"InstanceGroupType\":\"CORE\",
-      \"Name\":\"Core\",
-      \"InstanceType\":\"r7i.xlarge\",
-      \"EbsConfiguration\":{
-        \"EbsBlockDeviceConfigs\":[
-          {
-            \"VolumeSpecification\":{
-              \"VolumeType\":\"gp3\",
-              \"SizeInGB\":150
-            },
-            \"VolumesPerInstance\":1
-          }
-        ]
-      }
-    }
-  ]" \
-  --scale-down-behavior "TERMINATE_AT_TASK_COMPLETION" \
-  --ebs-root-volume-size "50"
+# ... [rest of the script content]
 ```
 
-2. Make script executable:
+2. Set permissions and run:
 ```bash
 chmod +x create_cluster.sh
-```
-
-3. Run script:
-```bash
 ./create_cluster.sh
 ```
 
-### 4. Verify Cluster Creation
+After execution, you should see your cluster in the EMR console:
+
+![EMR Cluster Console](./screenshots/'Screenshot 2024-12-25 172516.png')
+
+### 4. Cluster Verification
+
+Monitor the cluster creation:
+
 ```bash
 # Get cluster status
-aws emr describe-cluster --cluster-id <your-cluster-id>
+aws emr describe-cluster --cluster-id j-LE8CLNR85COH
 
 # List active clusters
 aws emr list-clusters --active
 ```
 
-### 5. Access Cluster
+Current cluster configuration:
+![Instance Groups](./screenshots/'Screenshot 2024-12-25 172542.png')
 
-#### Configure SSH Access
-1. Get master node DNS:
+### 5. Access Configuration
+
+#### SSH Access Setup
+
+1. Get the master node DNS:
 ```bash
-aws emr describe-cluster --cluster-id <cluster-id> --query 'Cluster.MasterPublicDnsName'
+aws emr describe-cluster --cluster-id j-LE8CLNR85COH \
+    --query 'Cluster.MasterPublicDnsName'
 ```
 
-2. Configure security group:
+2. Configure security group access:
 ```bash
 # Get security group ID
-aws emr describe-cluster --cluster-id <cluster-id> --query 'Cluster.Ec2InstanceAttributes.EmrManagedMasterSecurityGroup'
+aws emr describe-cluster --cluster-id j-LE8CLNR85COH \
+    --query 'Cluster.Ec2InstanceAttributes.EmrManagedMasterSecurityGroup'
 
 # Add SSH access
 aws ec2 authorize-security-group-ingress \
@@ -138,7 +146,9 @@ aws ec2 authorize-security-group-ingress \
     --cidr 0.0.0.0/0
 ```
 
-3. Set up SSH key (WSL users):
+#### SSH Key Setup
+
+For WSL users:
 ```bash
 # Copy key to WSL home directory
 cp "PolePredict Cluster.pem" ~/
@@ -146,23 +156,50 @@ cd ~
 chmod 400 "PolePredict Cluster.pem"
 
 # Connect to cluster
-ssh -i "PolePredict Cluster.pem" hadoop@<master-node-public-dns>
+ssh -i "PolePredict Cluster.pem" hadoop@ec2-35-181-49-253.eu-west-3.compute.amazonaws.com
 ```
 
-4. Set up SSH key (non-WSL users):
+Successful connection should show:
+![SSH Connection](./screenshots/'Screenshot 2024-12-25 165657.png')
+
+For non-WSL users:
 ```bash
 chmod 400 "PolePredict Cluster.pem"
-ssh -i "PolePredict Cluster.pem" hadoop@<master-node-public-dns>
+ssh -i "PolePredict Cluster.pem" hadoop@ec2-35-181-49-253.eu-west-3.compute.amazonaws.com
 ```
 
-#### Access Web Interfaces
-```bash
-# JupyterHub
-https://<master-node-public-dns>:9443
+### 6. Web Interface Access
 
-# HBase UI
-http://<master-node-public-dns>:16010
+The following interfaces are available once the cluster is running:
 
-# Spark History Server
-http://<master-node-public-dns>:18080
+```mermaid
+graph LR
+    subgraph Web Interfaces
+        JH[JupyterHub\n9443]
+        HB[HBase UI\n16010]
+        SP[Spark History\n18080]
+    end
+
+    DNS[Master Node DNS] --> Web Interfaces
 ```
+
+Access URLs:
+- JupyterHub: `https://<master-node-dns>:9443`
+- HBase UI: `http://<master-node-dns>:16010`
+- Spark History Server: `http://<master-node-dns>:18080`
+
+## Cluster Details
+
+Current configuration:
+- **Cluster ID**: j-LE8CLNR85COH
+- **EMR Version**: emr-7.5.0
+- **Applications**: Hadoop 3.4.0, HBase 2.5.10, Spark 3.5.2, ZooKeeper 3.9.2, JupyterHub 1.5.0, Livy 0.8.0
+- **OS**: Amazon Linux 2023.6.20241031.0
+
+## Troubleshooting
+
+If you encounter issues:
+1. Verify security group configurations
+2. Check SSH key permissions
+3. Ensure proper IAM role assignments
+4. Monitor cluster status in EMR console
