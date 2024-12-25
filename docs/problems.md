@@ -214,6 +214,55 @@ hdfs dfsadmin -report
 - No data corruption or replication issues
 ```
 
+## Cost Management and Optimization
+
+### Cost Overview
+Current monitoring shows efficient resource utilization with reasonable costs:
+
+![AWS Cost Overview](screenshots/aws_cost_overview.png)
+
+**Current Cost Breakdown:**
+- Total Current Month Cost: $12.47
+- Main Components:
+  - EC2 Compute: Primary cost driver
+  - EMR Service: Additional MapReduce costs
+  - Tax: Standard AWS tax rates
+  - Other Services: Minimal additional costs
+
+### Cost Optimization Strategies
+
+1. Instance Selection Optimization
+   - Choose correct instance types for workload
+   - Balance between performance and cost
+   - Use spot instances where appropriate
+   - Monitor instance utilization
+
+2. Storage Cost Management
+   - Optimize EBS volume sizes
+   - Use gp3 volumes for better price/performance
+   - Monitor and clean up unused storage
+   - Implement data lifecycle policies
+
+3. Operational Cost Reduction
+   - Implement auto-termination for dev/test clusters
+   - Schedule cluster operations during off-peak hours
+   - Monitor and optimize data transfer costs
+   - Regular cleanup of temporary files and logs
+
+### Cost Monitoring Best Practices
+
+1. Regular Review
+   - Monitor daily cost accumulation
+   - Track cost per component
+   - Set up cost alerts
+   - Review usage patterns
+
+2. Resource Optimization
+   - Right-size instances based on utilization
+   - Terminate unused resources
+   - Optimize data storage and transfer
+   - Use AWS Cost Explorer for insights
+
 ## Best Practices
 
 1. Instance Selection
@@ -221,18 +270,18 @@ hdfs dfsadmin -report
 - Use AWS CLI to check instance type support
 - Consider memory requirements for HBase
 
-2. Storage Planning
+1. Storage Planning
 - Calculate storage needs including replication factor
 - Use gp3 volumes for better performance
 - Allocate sufficient space for logs and temporary files
 - Ensure replication factor matches number of DataNodes
 
-3. Networking
+1. Networking
 - Use same subnet for all nodes
 - Verify security group configurations
 - Enable required ports for services
 
-4. Monitoring
+1. Monitoring
 - Regular checks using `describe-cluster`
 - Monitor CloudWatch metrics
 - Review EMR logs in S3
