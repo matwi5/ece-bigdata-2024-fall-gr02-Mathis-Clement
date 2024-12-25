@@ -1,169 +1,173 @@
-# HBase Configuration and Usage
+# HBase Configuration and Usage Guide
 
-## Setup SSH Tunnel
-To connect to HBase from your local machine, you need to create an SSH tunnel:
+## Architecture Overview
 
-```bash
-ssh -i "PolePredict Cluster.pem" -N -L 9090:localhost:9090 hadoop@<master-node-public-dns>
-```
+HBase follows a distributed architecture designed to provide scalable and reliable data storage. Understanding this architecture is crucial for proper configuration and maintenance.
 
-## Python Requirements
-Install required Python packages:
-```bash
-pip install happybase
-```
+### Core Components
 
-## Test Connection
-Use this script to test HBase connection:
+The HBase architecture consists of three main components working together to provide distributed storage capabilities:
 
-```python
-import happybase
-import logging
+#### 1. Master Server
+The Master Server acts as the coordinator of the HBase cluster. Running on our EMR master node (m7g.xlarge instance), it performs several critical functions:
+- Manages the assignment of regions to Region Servers
+- Handles schema changes and table management
+- Monitors the health of all Region Servers
+- Coordinates load balancing across the cluster
 
-# Configuration
-HBASE_HOST = 'localhost'  # When using SSH tunnel
-TEST_TABLE = 'test_connection'
+When a region becomes too large, the Master Server initiates and manages the region splitting process, ensuring even data distribution across the cluster.
 
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(levelname)s - %(message)s')
+#### 2. Region Servers
+Region Servers are the workhorses of HBase, running on our EMR core nodes (r7i.xlarge instances). They are responsible for:
+- Handling all read and write requests for their assigned regions
+- Managing data storage and retrieval
+- Maintaining the MemStore and managing flushes to HFiles
+- Processing client requests directly
 
-def test_hbase_connection():
-    try:
-        connection = happybase.Connection(HBASE_HOST)
-        existing_tables = connection.tables()
-        print(f"Existing tables: {existing_tables}")
-        connection.close()
-    except Exception as e:
-        logging.error(f"Error: {str(e)}")
+Each Region Server can handle multiple regions, and the number of regions per server is automatically managed based on load and data size.
 
-if __name__ == "__main__":
-    test_hbase_connection()
-```
+#### 3. ZooKeeper Service
+ZooKeeper plays a crucial coordination role in the HBase cluster, running on our EMR master node. Its responsibilities include:
+- Maintaining the cluster state through a hierarchical namespace
+- Providing distributed synchronization services
+- Managing server failure detection and recovery
+- Storing critical cluster metadata
 
-## Basic Operations
-Example script for basic HBase operations:
+### Storage Architecture
 
-```python
-import happybase
-import logging
-import time
+HBase implements a hierarchical storage model that efficiently manages data across the distributed system:
 
-# Configuration
-HBASE_HOST = 'localhost'
-TABLE_NAME = 'f1_test'
+#### Region Level
+Regions are the basic unit of data distribution in HBase. Each region contains a range of rows for a particular table, defined by start and end row keys. As data grows:
+- Regions automatically split when they reach a configurable size threshold
+- Split regions are distributed across available Region Servers
+- The Master Server manages region assignment to ensure balanced load
 
-def test_hbase_operations():
-    connection = happybase.Connection(HBASE_HOST)
-    
-    # Create table
-    connection.create_table(
-        TABLE_NAME,
-        {'driver': dict(), 'car': dict()}
-    )
-    
-    # Get table
-    table = connection.table(TABLE_NAME)
-    
-    # Insert data
-    row_key = '2024#1#VER'
-    table.put(row_key.encode(), {
-        b'driver:name': b'Max Verstappen',
-        b'driver:number': b'33',
-        b'car:team': b'Red Bull Racing'
-    })
-    
-    # Read data
-    row = table.row(row_key.encode())
-    print("\nRetrieved data:")
-    for key, value in row.items():
-        print(f"{key.decode()}: {value.decode()}")
-```
+#### Storage Implementation
+Data in HBase is managed through a combination of in-memory and on-disk structures:
 
-## HDFS Replication Configuration
-By default, HDFS is configured with a replication factor of 3. However, with only 2 core nodes, we need to adjust this:
+1. **MemStore**
+   The MemStore serves as a write buffer, providing fast write operations:
+   - New writes are first stored in the MemStore
+   - Data in the MemStore is sorted by row key
+   - When the MemStore reaches its size threshold, it triggers a flush
 
-1. Check current replication factor:
-```bash
-hdfs getconf -confKey dfs.replication
-```
+2. **HFiles**
+   HFiles are the persistent storage format on HDFS:
+   - Created when MemStore data is flushed to disk
+   - Immutable once written
+   - Organized in a Log-Structured Merge Tree (LSM) pattern
+   - Periodically compacted to maintain read efficiency
 
-2. Modify HDFS configuration:
-```bash
-sudo vim /etc/hadoop/conf/hdfs-site.xml
-```
-Add or modify:
-```xml
-<property>
-  <name>dfs.replication</name>
-  <value>2</value>
-</property>
-```
+## Configuration Management
 
-3. Modify HBase configuration:
-```bash
-sudo vim /etc/hbase/conf/hbase-site.xml
-```
-Add:
-```xml
-<property>
-  <name>dfs.replication</name>
-  <value>2</value>
-</property>
-```
+Proper configuration is essential for optimal HBase performance. Our EMR cluster requires specific configurations to match our architecture and workload requirements.
 
-4. Apply changes:
-```bash
-# Restart services
-sudo systemctl restart hadoop-hdfs-namenode
-sudo systemctl start hbase-master
+### Configuration Structure
 
-# Set replication for existing files
-hdfs dfs -setrep -w 2 -R /user/hbase
-```
+HBase configuration follows a hierarchical structure with multiple configuration files:
 
-5. Verify configuration:
-```bash
-# Check HDFS replication factor
-hdfs getconf -confKey dfs.replication
+#### Core Configuration Files
 
-# Check HDFS status
-hdfs dfsadmin -report
+1. **hbase-site.xml**
+   This is the primary configuration file for HBase, located in /etc/hbase/conf/. It contains:
+   - All cluster-specific settings
+   - Performance tuning parameters
+   - Security configurations
+   - Integration settings with other services
 
-# Check blocks status
-hdfs fsck /user/hbase -files -blocks
-```
+2. **hdfs-site.xml**
+   Located in /etc/hadoop/conf/, this file configures the underlying HDFS layer:
+   - Replication factors for data reliability
+   - Block sizes and storage policies
+   - HDFS-specific performance settings
 
-## HBase Data Model
-- **Row Key Structure**: `YEAR#RACE#DRIVER`
-- **Column Families**:
-  - `driver`: Driver-related information
-  - `car`: Car and team information
+### Critical Configuration Areas
 
-## Best Practices
-1. Always use SSH tunnel for remote connections
-2. Encode strings when working with HBase (use `.encode()`)
-3. Close connections after use
-4. Use meaningful row keys for efficient data retrieval
-5. Monitor replication status regularly
-6. Ensure replication factor matches available DataNodes
+#### Memory Management
+Proper memory configuration is crucial for HBase performance:
 
-## Common Issues and Solutions
-1. Connection refused:
-   - Verify SSH tunnel is active
-   - Check if HBase is running on the master node
-   - Verify port 9090 is open in security group
+1. **Region Server Memory**
+   Region Servers require careful memory allocation:
+   - Heap size should be set based on available system memory
+   - MemStore size limits prevent out-of-memory situations
+   - Block cache size affects read performance
 
-2. Table not found:
-   - Check table name exists
-   - Ensure proper encoding of table names
+2. **Block Cache**
+   The block cache improves read performance:
+   - Caches frequently accessed data blocks
+   - Size should be balanced with MemStore size
+   - Eviction policies can be tuned for specific workloads
 
-3. Data retrieval issues:
-   - Verify row key format
-   - Check column family and qualifier names
-   - Ensure proper encoding of values
+#### I/O Configuration
+I/O settings affect both performance and reliability:
 
-4. Replication issues:
-   - Verify number of active DataNodes
-   - Check disk space on DataNodes
-   - Monitor under-replicated blocks
-   - Ensure replication factor doesn't exceed DataNode count
+1. **Compaction Settings**
+   Compaction policies determine how HBase manages data files:
+   - Major compaction frequency
+   - Minor compaction triggers
+   - Compaction thread pool size
+
+2. **Write Ahead Log (WAL)**
+   WAL configuration affects durability and performance:
+   - Sync frequency
+   - Roll size and period
+   - Replication settings
+
+## Operational Procedures
+
+### Monitoring and Maintenance
+
+Regular monitoring ensures cluster health and performance:
+
+#### Health Monitoring
+Essential metrics to monitor include:
+- Region Server health status
+- Memory usage patterns
+- I/O wait times
+- Compaction queue sizes
+- Region distribution
+
+#### Regular Maintenance Tasks
+Maintenance procedures help maintain optimal performance:
+1. Log Management
+   - Regular log rotation
+   - Archive or delete old logs
+   - Monitor log levels and adjust as needed
+
+2. Compaction Management
+   - Monitor compaction queues
+   - Schedule major compactions during low-usage periods
+   - Track compaction performance
+
+### Best Practices
+
+#### Data Model Design
+Effective data modeling is crucial for HBase performance:
+
+1. Row Key Design
+   - Avoid sequential keys to prevent hotspotting
+   - Include relevant query fields in the key
+   - Consider data access patterns
+
+2. Column Family Organization
+   - Keep column families to a minimum
+   - Group related columns together
+   - Consider access patterns when designing families
+
+#### Performance Optimization
+Optimize performance through:
+1. Batch Operations
+   - Use bulk loads for large data sets
+   - Implement batch gets and puts
+   - Configure optimal batch sizes
+
+2. Scan Optimization
+   - Use proper filter design
+   - Implement efficient row key patterns
+   - Consider time range filters
+
+3. Client Configuration
+   - Configure appropriate client buffers
+   - Use scanner caching effectively
+   - Implement retry and timeout policies

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- HBase & ZooKeeper Configuration -->
+    <property>
+        <name>hbase.cluster.distributed</name>
+        <value>true</value>
+    </property>
+    
+    <property>
+        <name>hbase.rootdir</name>
+        <value>hdfs:///user/hbase</value>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>localhost</value>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>2181</value>
+    </property>
+
+    <!-- Replication Configuration -->
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+        <description>Replication factor for HFiles and WAL files</description>
+    </property>
+
+    <!-- Memory and Performance Tuning -->
+    <property>
+        <name>hbase.regionserver.handler.count</name>
+        <value>30</value>
+        <description>Number of RPC Server instances</description>
+    </property>
+
+    <property>
+        <name>hbase.regionserver.global.memstore.size</name>
+        <value>0.4</value>
+        <description>Maximum size for all memstores in a region server before flush</description>
+    </property>
+
+    <property>
+        <name>hbase.hregion.memstore.flush.size</name>
+        <value>134217728</value>
+        <description>Memstore will be flushed to disk if size exceeds this number of bytes</description>
+    </property>
+
+    <!-- Thrift Server Configuration for Python Client -->
+    <property>
+        <name>hbase.regionserver.thrift.server.type</name>
+        <value>TThreadPoolServer</value>
+    </property>
+
+    <property>
+        <name>hbase.regionserver.thrift.compact</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>hbase.regionserver.thrift.framed</name>
+        <value>true</value>
+    </property>
+
+    <!-- Security Configuration -->
+    <property>
+        <name>hbase.security.authentication</name>
+        <value>simple</value>
+    </property>
+
+    <property>
+        <name>hbase.security.authorization</name>
+        <value>false</value>
+    </property>
+
+    <!-- Compaction & Split Settings -->
+    <property>
+        <name>hbase.hregion.max.filesize</name>
+        <value>10737418240</value>
+        <description>Maximum file size before split</description>
+    </property>
+
+    <property>
+        <name>hbase.hstore.blockingStoreFiles</name>
+        <value>20</value>
+        <description>Maximum number of store files before blocking writes</description>
+    </property>
+</configuration>

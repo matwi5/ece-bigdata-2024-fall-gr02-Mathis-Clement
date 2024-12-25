@@ -1,6 +1,8 @@
 # SSH Keys
 *.pem
 PolePredict Cluster.pem
+*.ppk
+PolePredict Cluster.ppk
 
 # AWS credentials
 .aws

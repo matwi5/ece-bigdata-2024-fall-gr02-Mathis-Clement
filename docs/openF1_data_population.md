@@ -1,110 +1,133 @@
 # OpenF1 Data Population Script Documentation
 
 ## Overview
-The `hbase_populate_openF1.py` script is designed to fetch Formula 1 data from the OpenF1 API and store it in a distributed HBase database running on an EMR cluster. The script fetches data for the 2023 and 2024 racing seasons.
+The `hbase_populate_openF1.py` script is designed to fetch Formula 1 data from the OpenF1 API and store it in a distributed HBase database running on an EMR cluster. This script has been optimized for parallel processing and implements robust error handling.
 
 ## Technical Architecture
 
-### HBase Tables Structure
+### Components
 
-1. **f1_data Table**
-   - Main table storing all F1-related data
+#### 1. RequestQueue
+- Manages asynchronous HTTP requests to the OpenF1 API
+- Implements rate limiting with `max_concurrent_requests`
+- Handles retries and backoff strategy
+- Maintains request statistics
+
+#### 2. HBaseConnector
+- Manages connection to HBase
+- Handles table creation and data storage operations
+- Implements efficient batch operations
+- Supports column family management
+
+#### 3. ParallelF1DataCollector
+- Implements parallel processing of F1 data
+- Manages multiprocessing pool for meeting processing
+- Coordinates data collection across years and sessions
+- Maintains global statistics
+
+### Data Model
+
+#### HBase Tables
+
+1. `f1_data`
    - Column Families:
      - `car`: Car telemetry data
-       - Attributes: speed, rpm, gear, throttle, brake, drs
-       - High-frequency data (4Hz)
      - `driver`: Driver information
-       - Basic: name, number, team
-       - Session-specific: status, position
-     - `interval`: Time intervals data
-       - Gap to leader
-       - Gap to car ahead
-       - Interval types
-     - `lap`: Lap timing data
-       - Lap times
-       - Sector times
-       - Lap status (valid/invalid)
-     - `location`: Car GPS data
-       - Coordinates (x, y, z)
-       - Track status
-       - High-frequency data (4Hz)
-     - `meeting`: Race meeting information
-       - Circuit details
-       - Country
-       - Meeting type
-     - `pit`: Pit stop data
-       - Entry/exit times
-       - Duration
-       - Tire information
-     - `position`: Track position data
-       - Track position
-       - Status
-     - `race_control`: Race control messages
-       - Message content
-       - Category
-       - Flag status
-     - `session`: Session information
-       - Type (Practice/Qualifying/Race)
-       - Start/End times
-       - Weather conditions
-     - `stint`: Stint data
-       - Tire compound
-       - Lap count
-       - Stint number
-     - `team_radio`: Team radio communications
-       - Message content
-       - Timestamp
-       - Category
+     - `intervals`: Time intervals
+     - `laps`: Lap timing
+     - `location`: GPS coordinates
+     - `meeting`: Race meeting details
+     - `pit`: Pit stop information
+     - `position`: Track position
+     - `racecontrol`: Race control messages
+     - `session`: Session details
+     - `stints`: Stint information
+     - `teamradio`: Team radio communications
+     - `weather`: Weather data
 
-2. **report Table**
-   - Monitoring table for data ingestion process
-   - Column Family `info`:
-     - `status`: Success/Failed/Skipped
-     - `data_transferred`: Count of records
-     - `start_time`: Operation start timestamp
-     - `end_time`: Operation end timestamp
-     - `error_message`: Details if failed
+2. `f1_reports`
+   - Column Families:
+     - `meta`: Metadata information
+     - `stats`: Processing statistics
+     - `errors`: Error logging
 
-### Row Key Design Strategy
+### Row Key Design
 
-Detailed breakdown of row key patterns and their rationale:
+The script uses composite row keys following these patterns:
 
-1. **Car Data & Location Data**:
+1. Time Series Data (car_data, location):
    ```
-   {year}#{meeting_key}#{session_key}#{driver_number}#{date_str}
+   {year}#{meeting_key}#{session_key}#{driver_number}#{timestamp}
    ```
-   - Enables efficient time-series queries
-   - Natural grouping by year and event
-   - Fast lookups for specific driver data
 
-2. **Lap Data**:
+2. Lap Data:
    ```
    {year}#{meeting_key}#{session_key}#{driver_number}#{lap_number}
    ```
-   - Optimized for lap-by-lap analysis
-   - Easy retrieval of specific lap information
-   - Maintains chronological order
 
-3. **Meeting Data**:
+3. Meeting/Session Data:
    ```
-   {year}#{meeting_key}
+   {year}#{meeting_key}#{session_key}
    ```
-   - Simple key for race weekend information
-   - Year prefix for historical queries
 
-4. **Session Data**:
-   ```
-   {year}#{session_key}
-   ```
-   - Unique identifier for each session
-   - Enables session-specific queries
+## Implementation Details
 
-5. **Report Data**:
-   ```
-   {year}#{meeting_key}#{session_key}#{endpoint}#{timestamp}
-   ```
-   - Comprehensive key for monitoring
-   - Enables tracking of specific data ingestion tasks
+### Parallel Processing
+- Uses Python's `multiprocessing` for parallel meeting processing
+- Implements process pool executor for controlled concurrency
+- Each meeting is processed in a separate process
+- Configured with 10 parallel processes for optimal performance
+
+### Error Handling
+1. **Request Level**
+   - Automatic retry for failed requests
+   - Configurable retry count and delay
+   - Rate limit handling with exponential backoff
+
+2. **Process Level**
+   - Process pool recovery from crashes
+   - Graceful shutdown on interruption
+   - Comprehensive error logging
+
+### Configuration Parameters
+```python
+CONFIG = {
+    "max_retries": 3,
+    "retry_delay": 5,
+    "request_timeout": 60,
+    "delay_between_requests": 1,
+    "max_concurrent_requests": 10,
+    "time_interval": 900  # 15 minutes chunk size
+}
+```
+
+### Logging System
+- Implements colored console output
+- Maintains detailed log file
+- Different log levels (INFO, SUCCESS, ERROR, WARNING)
+- Progress tracking and statistics
+
+## Usage
+
+### Prerequisites
+```bash
+pip install requests==2.31.0
+pip install happybase==1.2.0
+pip install aiohttp
+pip install colorama
+```
+
+### Running the Script
+```bash
+python hbase_populate_openF1.py
+```
+
+### Monitoring
+The script provides real-time progress updates:
+- Meeting/Session processing status
+- Request statistics
+- Error reporting
+- Performance metrics
 
 ## Data Flow and Processing
 
@@ -255,6 +278,8 @@ Endpoints and Their Characteristics:
    echo "scan 'report'" | hbase shell
    ```
 
+## Performance Considerations
+
 ## Performance Tuning
 
 ### Configuration Parameters
@@ -278,35 +303,23 @@ Endpoints and Their Characteristics:
    ```
 
 ### Resource Requirements
-1. **Memory Usage**:
-   - Base: ~500MB
-   - Per thread: ~100MB
-   - Maximum: ~1GB total
+- Memory: ~100MB per process
+- Network: Rate-limited API requests
+- CPU: Multi-process utilization
+- Storage: Efficient HBase writes
 
-2. **Network Usage**:
-   - API calls: ~100 requests/minute
-   - Data transfer: ~10MB/minute
+### Optimization Techniques
+1. Chunked Processing
+   - Splits time series data into 15-minute chunks
+   - Prevents memory overflow
+   - Enables parallel processing
 
-3. **Storage Requirements**:
-   - Estimated per race: ~500MB
-   - Annual total: ~15GB
+2. Connection Management
+   - Reuses HBase connections
+   - Implements connection pooling
+   - Manages async HTTP sessions
 
-## Dependencies and Setup
-1. **Python Packages**:
-   ```bash
-   pip install requests==2.31.0
-   pip install happybase==1.2.0
-   ```
-
-2. **System Requirements**:
-   - Python 3.8+
-   - HBase 2.5.10+
-   - Sufficient disk space (~20GB minimum)
-   - Network access to OpenF1 API
-
-3. **Environment Setup**:
-   ```bash
-   export PYTHONPATH="${PYTHONPATH}:/path/to/script/directory"
-   export HBASE_THRIFT_HOST=your-emr-master-dns
-   export HBASE_THRIFT_PORT=9090
-   ```
+3. Data Batching
+   - Groups related operations
+   - Reduces network overhead
+   - Optimizes HBase writes

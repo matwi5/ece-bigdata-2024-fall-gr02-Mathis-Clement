@@ -1,3 +1,7 @@
+import multiprocessing
+import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 import asyncio
 import aiohttp
 import happybase
@@ -9,9 +13,8 @@ from dataclasses import dataclass
 import sys
 import traceback
 from colorama import Fore, Style, init
-import threading
-from contextlib import asynccontextmanager
 import logging
+from functools import partial
 
 # Initialize colorama
 init()
@@ -25,7 +28,7 @@ CONFIG = {
     "retry_delay": 5,
     "request_timeout": 60,
     "delay_between_requests": 1,
-    "max_concurrent_requests": 2,
+    "max_concurrent_requests": 10,
     "time_interval": 900  # 15 minutes in seconds
 }
 
@@ -118,7 +121,7 @@ class RequestQueue:
             await self.session.close()
 
     async def make_request(self, url: str) -> Dict[str, Any]:
-        endpoint = url.split('/v1')[1].split('?')[0].split('/')[1] # Extraction du nom de l'endpoint
+        endpoint = url.split('/v1')[1].split('?')[0].split('/')[1]
 
         async with self.semaphore:
             for attempt in range(CONFIG['max_retries']):
@@ -134,7 +137,7 @@ class RequestQueue:
                         response.raise_for_status()
                         data = await response.json()
                         self.stats.total_requests += 1
-                        self.stats.endpoint_stats[endpoint]['success'] += 1 # Incrémentation du succès
+                        self.stats.endpoint_stats[endpoint]['success'] += 1
                         Logger.success(f"Received data: {len(data) if isinstance(data, list) else 1} items")
                         return data
 
@@ -151,31 +154,30 @@ class RequestQueue:
                     await asyncio.sleep(CONFIG['retry_delay'])
 
             self.stats.failed_requests += 1
-            Logger.error(f"Failed after {CONFIG['max_retries']} attempts for {url}") # Log avant de lever l'exception
+            Logger.error(f"Failed after {CONFIG['max_retries']} attempts for {url}")
             raise Exception(f"Failed after {CONFIG['max_retries']} attempts")
 
 class HBaseConnector:
-    def __init__(self, host='localhost', port=9090):
+    def __init__(self, host='localhost', port=9090, initialize_tables=False):
         self.connection = happybase.Connection(host=host, port=port)
-        self.initialize_tables()
+        if initialize_tables:
+            self.initialize_tables()
 
     def initialize_tables(self):
         """Initialize HBase tables with correct column families"""
         try:
-            # Drop existing tables if they exist
             existing_tables = self.connection.tables()
             if b'f1_data' in existing_tables:
                 self.connection.delete_table('f1_data', disable=True)
             if b'f1_reports' in existing_tables:
                 self.connection.delete_table('f1_reports', disable=True)
 
-            # Create tables with correct column families
             self.connection.create_table(
                 'f1_data',
                 {
                     'car': dict(),
                     'driver': dict(),
-                    'interval': dict(),
+                    'intervals': dict(),
                     'laps': dict(),
                     'location': dict(),
                     'meeting': dict(),
@@ -204,73 +206,40 @@ class HBaseConnector:
             raise
 
     def store_data(self, table: str, row_key: str, data: Dict[str, Any],
-               column_family: str, metadata: Optional[Dict] = None):
-        """Store data in HBase with consistent column family naming"""
+                   column_family: str, metadata: Optional[Dict] = None):
         try:
             table_obj = self.connection.table(table)
-
-            # Normalize column family name (remove underscores and convert to lowercase)
             column_family = column_family.replace('_', '').lower()
-
-            # Prepare data for storage
             columns = {
                 f"{column_family}:{key}".encode(): str(value).encode()
                 for key, value in data.items()
             }
 
-            # Add metadata if provided
             if metadata:
                 columns.update({
                     f"{column_family}:_meta_{key}".encode(): str(value).encode()
                     for key, value in metadata.items()
                 })
 
-            # Store in HBase
             table_obj.put(row_key.encode(), columns)
-            #Logger.success(f"Stored data in {table}:{column_family} with key {row_key}")
 
         except Exception as e:
             Logger.error(f"Error storing data in HBase: {str(e)}")
             raise
 
 class F1DataCollector:
-    def __init__(self, hbase_host='localhost', hbase_port=9090):
+    def __init__(self, hbase_host='localhost', hbase_port=9090, initialize_tables=False):
         self.stats = Stats()
         self.queue = RequestQueue()
-        self.hbase = HBaseConnector(hbase_host, hbase_port)
+        self.hbase = HBaseConnector(hbase_host, hbase_port, initialize_tables)
         self.stats.start_time = time.time()
 
     def generate_row_key(self, *components) -> str:
         return "#".join(map(str, components))
 
-    async def fetch_meetings(self, year: int) -> List[Dict[str, Any]]:
-        url = f"{BASE_URL}/meetings?year={year}"
-        Logger.info(f"Fetching meetings for year: {year} from URL: {url}") # Ajout du log au début de la fonction
-        try:
-            meetings = await self.queue.make_request(url)
-
-            # Store each meeting in HBase
-            for meeting in meetings:
-                row_key = self.generate_row_key(year, meeting['meeting_key'])
-                self.hbase.store_data(
-                    'f1_data',
-                    row_key,
-                    meeting,
-                    'meeting',
-                    {'fetched_at': datetime.now().isoformat()}
-                )
-
-            Logger.success(f"Fetched and stored {len(meetings)} meetings for {year}")
-            return meetings
-
-        except Exception as e:
-            Logger.error(f"Error fetching meetings for year {year}: {str(e)}")
-            raise
-
     async def fetch_time_series_data(self, year: int, meeting_key: int, session_key: int,
                                    driver_number: int, endpoint: str) -> None:
         try:
-            # Get session timeframe
             session_info = await self.queue.make_request(f"{BASE_URL}/sessions?session_key={session_key}")
             if not session_info:
                 return
@@ -293,7 +262,6 @@ class F1DataCollector:
                 try:
                     data = await self.queue.make_request(url)
                     if data:
-                        # Store time series data
                         for item in data:
                             row_key = self.generate_row_key(
                                 year, meeting_key, session_key,
@@ -328,35 +296,29 @@ class F1DataCollector:
             session_key = session['session_key']
             Logger.progress(f"Processing session {session['session_name']}")
 
-            # Store session data
             row_key = self.generate_row_key(year, meeting_key, session_key)
             self.hbase.store_data('f1_data', row_key, session, 'session')
 
-            # Get drivers first
             drivers = await self.queue.make_request(f"{BASE_URL}/drivers?session_key={session_key}")
 
-            # Process global data
             for endpoint in GLOBAL_ENDPOINTS:
-                if endpoint != 'drivers':  # already fetched
+                if endpoint != 'drivers':
                     data = await self.queue.make_request(f"{BASE_URL}{ENDPOINTS[endpoint]}?session_key={session_key}")
                     if data:
                         endpoint_key = self.generate_row_key(year, meeting_key, session_key, endpoint)
                         self.hbase.store_data('f1_data', endpoint_key, {'data': data}, endpoint.replace('_', ''))
                     await asyncio.sleep(CONFIG['delay_between_requests'])
 
-            # Process driver-specific data
             for driver in drivers:
                 driver_number = driver['driver_number']
                 Logger.progress(f"Processing driver {driver_number}")
 
-                # Time series data
                 for endpoint in TIME_SERIES_ENDPOINTS:
                     await self.fetch_time_series_data(
                         year, meeting_key, session_key, driver_number, endpoint
                     )
                     await asyncio.sleep(CONFIG['delay_between_requests'])
 
-                # Other driver-specific data
                 for endpoint in DRIVER_SPECIFIC_ENDPOINTS:
                     if endpoint not in TIME_SERIES_ENDPOINTS:
                         data = await self.queue.make_request(
@@ -365,7 +327,7 @@ class F1DataCollector:
                         )
                         if data:
                             column_family = endpoint.replace('_', '')
-                            for item in data:  # Itérer sur la liste des laps
+                            for item in data:
                                 row_key = self.generate_row_key(
                                     year, meeting_key, session_key, driver_number, item.get('lap_number') or item.get('time')
                                 )
@@ -378,13 +340,35 @@ class F1DataCollector:
             Logger.error(f"Error processing session: {str(e)}")
             raise
 
+    async def fetch_meetings(self, year: int) -> List[Dict[str, Any]]:
+        url = f"{BASE_URL}/meetings?year={year}"
+        Logger.info(f"Fetching meetings for year: {year} from URL: {url}")
+        try:
+            meetings = await self.queue.make_request(url)
+
+            for meeting in meetings:
+                row_key = self.generate_row_key(year, meeting['meeting_key'])
+                self.hbase.store_data(
+                    'f1_data',
+                    row_key,
+                    meeting,
+                    'meeting',
+                    {'fetched_at': datetime.now().isoformat()}
+                )
+
+            Logger.success(f"Fetched and stored {len(meetings)} meetings for {year}")
+            return meetings
+
+        except Exception as e:
+            Logger.error(f"Error fetching meetings for year {year}: {str(e)}")
+            raise
+
     async def process_meeting(self, year: int, meeting: Dict[str, Any]):
         try:
             meeting_key = meeting['meeting_key']
             Logger.separator()
             Logger.progress(f"Processing meeting: {meeting['meeting_name']}")
 
-            # Fetch and process sessions
             sessions_url = f"{BASE_URL}/sessions?meeting_key={meeting_key}"
             sessions = await self.queue.make_request(sessions_url)
 
@@ -398,6 +382,42 @@ class F1DataCollector:
             Logger.error(f"Error processing meeting: {str(e)}")
             raise
 
+def process_meeting_sync(year: int, meeting: Dict[str, Any], hbase_host: str, hbase_port: int) -> Dict[str, Any]:
+    """
+    Version synchrone du traitement d'un meeting pour la parallélisation
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    collector = F1DataCollector(hbase_host, hbase_port, initialize_tables=False)
+    
+    try:
+        loop.run_until_complete(collector.queue.initialize())
+        loop.run_until_complete(collector.process_meeting(year, meeting))
+        
+        return {
+            "meetings_processed": 1,
+            "sessions_processed": collector.stats.sessions_processed,
+            "total_requests": collector.stats.total_requests,
+            "failed_requests": collector.stats.failed_requests,
+            "endpoint_stats": collector.stats.endpoint_stats
+        }
+        
+    finally:
+        loop.run_until_complete(collector.queue.close())
+        loop.close()
+
+class ParallelF1DataCollector:
+    def __init__(self, hbase_host='localhost', hbase_port=9090, num_processes=None):
+        self.stats = Stats()
+        self.hbase_host = hbase_host
+        self.hbase_port = hbase_port
+        self.num_processes = num_processes or multiprocessing.cpu_count()
+        self.stats.start_time = time.time()
+
+        # Initialize HBase tables in the main process only
+        self.main_collector = F1DataCollector(hbase_host, hbase_port, initialize_tables=True)
+
     def display_stats(self):
         """Display current execution statistics."""
         elapsed_time = time.time() - self.stats.start_time
@@ -410,6 +430,7 @@ class F1DataCollector:
         Logger.stats(f"Sessions processed: {self.stats.sessions_processed}")
         Logger.stats(f"Total requests: {self.stats.total_requests}")
         Logger.stats(f"Failed requests: {self.stats.failed_requests}")
+        Logger.stats(f"Number of processes: {self.num_processes}")
 
         Logger.stats("\nEndpoint statistics:")
         for endpoint, stats in self.stats.endpoint_stats.items():
@@ -417,75 +438,84 @@ class F1DataCollector:
             print(f"    Success: {stats['success']}")
             print(f"    Failed: {stats['failed']}{Style.RESET_ALL}")
 
-    async def process_year(self, year: int):
-        """Process all data for a specific year."""
+    async def process_year_parallel(self, year: int):
+        temp_collector = F1DataCollector(self.hbase_host, self.hbase_port, initialize_tables=False)
+        await temp_collector.queue.initialize()
+        
         try:
-            Logger.info(f"Starting data collection for {year}")
-            meetings = await self.fetch_meetings(year)
-
-            for meeting in meetings:
-                await self.process_meeting(year, meeting)
-                self.display_stats()  # Show progress after each meeting
-
-            Logger.success(f"Completed data collection for {year}")
-
-        except Exception as e:
-            Logger.error(f"Error processing year {year}: {str(e)}")
-            raise
+            meetings = await temp_collector.fetch_meetings(year)
+            
+            with ProcessPoolExecutor(max_workers=self.num_processes) as executor:
+                futures = []
+                for meeting in meetings:
+                    future = executor.submit(
+                        process_meeting_sync,
+                        year,
+                        meeting,
+                        self.hbase_host,
+                        self.hbase_port
+                    )
+                    futures.append(future)
+                
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        stats = future.result()
+                        self.stats.meetings_processed += stats["meetings_processed"]
+                        self.stats.sessions_processed += stats["sessions_processed"]
+                        self.stats.total_requests += stats["total_requests"]
+                        self.stats.failed_requests += stats["failed_requests"]
+                        
+                        for endpoint, values in stats["endpoint_stats"].items():
+                            self.stats.endpoint_stats[endpoint]["success"] += values["success"]
+                            self.stats.endpoint_stats[endpoint]["failed"] += values["failed"]
+                    
+                    except Exception as e:
+                        Logger.error(f"Error processing meeting: {str(e)}")
+                
+        finally:
+            await temp_collector.queue.close()
 
     async def run(self):
         """Main execution method."""
         try:
-            Logger.info("Initializing F1 data collection")
-            await self.queue.initialize()
-
+            Logger.info(f"Initializing parallel F1 data collection with {self.num_processes} processes")
+            
             years = [2023, 2024]
             for year in years:
-                await self.process_year(year)
+                await self.process_year_parallel(year)
                 if year != years[-1]:
                     Logger.info("Waiting 5 seconds before processing next year...")
                     await asyncio.sleep(5)
-
+            
             Logger.success("Data collection completed successfully!")
             self.display_stats()
-
+            
         except Exception as e:
             Logger.error(f"Critical error during execution: {str(e)}")
             Logger.error(traceback.format_exc())
             raise
-        finally:
-            await self.queue.close()
-
-    async def graceful_shutdown(self):
-        """Handle graceful shutdown of the collector."""
-        Logger.warning("Initiating graceful shutdown...")
-        await self.queue.close()
-        self.display_stats()
-        Logger.success("Shutdown completed")
 
 async def main():
     """Entry point of the script."""
     collector = None
     try:
-        # Create and run the collector
-        collector = F1DataCollector()
+        collector = ParallelF1DataCollector(num_processes=10)  # Pour votre cluster de 3 machines
         await collector.run()
 
     except KeyboardInterrupt:
         Logger.warning("\nUser interruption detected!")
         if collector:
-            await collector.graceful_shutdown()
+            collector.display_stats()
 
     except Exception as e:
         Logger.error(f"Unhandled error: {str(e)}")
         Logger.error(traceback.format_exc())
         if collector:
-            await collector.graceful_shutdown()
+            collector.display_stats()
         sys.exit(1)
 
 if __name__ == "__main__":
     try:
-        # Set up asyncio event loop
         loop = asyncio.get_event_loop()
         loop.run_until_complete(main())
     except Exception as e:
