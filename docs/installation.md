@@ -105,7 +105,7 @@ chmod +x create_cluster.sh
 
 After execution, you should see your cluster in the EMR console:
 
-![EMR Cluster Console](./screenshots/'Screenshot 2024-12-25 172516.png')
+![EMR Cluster Console](./screenshots/emr_cluster_info.png)
 
 ### 4. Cluster Verification
 
@@ -120,7 +120,7 @@ aws emr list-clusters --active
 ```
 
 Current cluster configuration:
-![Instance Groups](./screenshots/'Screenshot 2024-12-25 172542.png')
+![Instance Groups](./screenshots/instance_groups.png)
 
 ### 5. Access Configuration
 
@@ -160,7 +160,7 @@ ssh -i "PolePredict Cluster.pem" hadoop@ec2-35-181-49-253.eu-west-3.compute.amaz
 ```
 
 Successful connection should show:
-![SSH Connection](./screenshots/'Screenshot 2024-12-25 165657.png')
+![SSH Connection](./screenshots/terminal_connection.png)
 
 For non-WSL users:
 ```bash
