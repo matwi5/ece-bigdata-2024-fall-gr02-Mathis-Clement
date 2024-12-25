@@ -17,33 +17,33 @@ The Spark processing runs on a 3-node EMR cluster, with one master node coordina
 flowchart TD
     subgraph Cluster["EMR Cluster Architecture"]
         M[Master Node\nm7g.xlarge]
-        C1[Core Node 1\nr7i.xlarge]
-        C2[Core Node 2\nr7i.xlarge]
+        CoreNode1[Core Node 1\nr7i.xlarge]
+        CoreNode2[Core Node 2\nr7i.xlarge]
         
-        M --> |YARN| C1
-        M --> |YARN| C2
-        M --> |Spark Driver| C1
-        M --> |Spark Driver| C2
-        C1 <--> |Data Exchange| C2
+        M --> |YARN| CoreNode1
+        M --> |YARN| CoreNode2
+        M --> |Spark Driver| CoreNode1
+        M --> |Spark Driver| CoreNode2
+        CoreNode1 <--> |Data Exchange| CoreNode2
 
-        subgraph Master
+        subgraph Master["Master"]
             SD[Spark Driver]
         end
 
-        subgraph "Core Node 1"
+        subgraph Core1["Core Node 1"]
             SE1[Spark Executor]
             SE2[Spark Executor]
         end
 
-        subgraph "Core Node 2"
+        subgraph Core2["Core Node 2"]
             SE3[Spark Executor]
             SE4[Spark Executor]
         end
     end
 
-    style Master fill:#f9f,stroke:#333,stroke-width:4px
-    style "Core Node 1" fill:#bbf,stroke:#333,stroke-width:2px
-    style "Core Node 2" fill:#bbf,stroke:#333,stroke-width:2px
+    style M fill:#f9f,stroke:#333,stroke-width:4px
+    style Core1 fill:#bbf,stroke:#333,stroke-width:2px
+    style Core2 fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 **Explanation:**
@@ -86,14 +86,22 @@ Memory management is crucial for Spark performance. The configuration is optimiz
 flowchart TD
     subgraph Executor["Spark Executor Memory (4GB)"]
         direction TB
-        OM[Overhead Memory\n(spark.executor.memoryOverhead)\n1GB]
-        SM[Spark Memory\n(spark.executor.memory)\n3GB]
+        OM["Overhead Memory
+        (spark.executor.memoryOverhead)
+        1GB"]
+        SM["Spark Memory
+        (spark.executor.memory)
+        3GB"]
         
-        SM --> |spark.memory.fraction (0.6)| MEM[Managed Memory\n(Execution + Storage)\n1.8 GB]
-        SM --> |spark.memory.storageFraction (0.5)| UMEM[Unmanaged Memory\n(User Memory)\n1.2 GB]
+        SM --> |"spark.memory.fraction (0.6)"| MEM["Managed Memory
+        (Execution + Storage)
+        1.8 GB"]
+        SM --> |"spark.memory.storageFraction (0.5)"| UMEM["Unmanaged Memory
+        (User Memory)
+        1.2 GB"]
         
-        MEM --> EX[Execution Memory]
-        MEM --> ST[Storage Memory]
+        MEM --> EX["Execution Memory"]
+        MEM --> ST["Storage Memory"]
     end
 ```
 
