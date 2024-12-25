@@ -2,7 +2,7 @@ import happybase
 import logging
 
 # Configuration
-HBASE_HOST = 'localhost'  # When using SSH tunnel
+HBASE_HOST = 'localhost' 
 TEST_TABLE = 'test_connection'
 
 logging.basicConfig(level=logging.INFO,
