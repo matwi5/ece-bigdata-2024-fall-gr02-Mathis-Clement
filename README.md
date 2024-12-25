@@ -256,6 +256,8 @@ Detailed documentation is available in the `docs` directory:
 - `spark.md`: Spark processing documentation
 - `problems.md`: Common issues and solutions
 - `F1_data_analysis.md`: Data analysis outputs
+- `openF1_data_population.md`: HBase poputlation with F1 data documentation
+- `hbase_test_and_read`: HBase tests and read documentation
 
 ## Testing
 Example scripts are provided in the `scripts/examples` directory:

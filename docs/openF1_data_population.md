@@ -129,6 +129,28 @@ The script provides real-time progress updates:
 - Error reporting
 - Performance metrics
 
+Here's an example of the script's API request logs showing successful data fetching:
+
+![API Requests Logs](screenshots/api_requests_logs.png)
+
+As shown in the logs, the script successfully:
+- Makes requests to the OpenF1 API with proper rate limiting
+- Receives varying amounts of data items (e.g., 3384, 3330, 1407 items)
+- Handles different session keys and time windows
+- Processes multiple drivers' data concurrently
+
+### Data Ingestion Verification
+
+The following screenshot shows successful data ingestion into HBase, with over 3.8 million records stored:
+
+![HBase Data Ingestion](screenshots/hbase_data_ingestion.png)
+
+Key observations from the data ingestion:
+- Consistent row key format (year#meeting#driver#timestamp)
+- Sequential count increments showing reliable data storage
+- Timestamp progression indicating proper time-series data organization
+- Stable ingestion rate with regular count increments
+
 ## Data Flow and Processing
 
 ### API Integration Details
